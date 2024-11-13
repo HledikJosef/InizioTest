@@ -1,0 +1,78 @@
+﻿@page "/searchPageWithApi/{Query}"
+@using System.Text.Json
+
+@inject NavigationManager NavManager
+@inject HttpClient HttpClient
+@inject IJSRuntime JsRuntime
+
+
+@if (searchResults?.Items != null)
+{
+	<div class="mb-3">
+		<button class="form-control btn-warning" @onclick="SaveResultsAsJsonAsync">Pro stažení výsledku vyhledávání klikněte zde.</button>
+	</div>
+
+
+	foreach (var result in searchResults.Items)
+	{
+		<div>
+			<h5><a href="@result.Link" target="_blank">@result.Title</a></h5>
+			<p>@result.Snippet</p>
+		</div>
+	}
+
+}
+
+@if (!string.IsNullOrEmpty(notification))
+{
+	<div><p>@notification</p></div>
+
+}
+
+
+@code {
+	[Parameter]
+	public string Query { get; set; } = string.Empty;
+	private SearchResult? searchResults = new SearchResult();
+	private string notification = "";
+	private readonly string apiKey = "";        // doplnit apiKey
+	private readonly string cx = "";            // doplnit cx(search engine)
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+
+		try
+		{
+			string url = $"https://www.googleapis.com/customsearch/v1?key={apiKey}&cx={cx}&q={Uri.EscapeDataString(Query)}";
+
+			searchResults = await HttpClient.GetFromJsonAsync<SearchResult>(url);
+
+		}
+		catch (HttpRequestException)
+		{
+			notification = "Nelze se připojit k Google API. Zkontrolujte hodnoty apiKey a cx, nebo iternetové připojení. ";
+		}
+		catch (Exception ex)
+		{
+			notification = $"Došlo k chybě : {ex.Message}";
+		}
+	}
+
+	private async Task SaveResultsAsJsonAsync()
+	{
+		try
+		{
+			if (searchResults?.Items != null)
+			{
+				JsonSaver saver = new JsonSaver(JsRuntime);
+				await saver.SaveResultToJsonAsync(searchResults);
+			}
+
+		}
+		catch (Exception ex)
+		{
+			notification = $"Došlo k chybě : {ex.Message}";
+		}
+	}
+}

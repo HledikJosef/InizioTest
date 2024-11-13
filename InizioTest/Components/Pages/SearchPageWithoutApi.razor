@@ -1,0 +1,79 @@
+﻿@page "/searchPageWithoutApi/{Query}"
+
+@inject NavigationManager NavManager
+@inject HttpClient HttpClient
+@inject IJSRuntime JsRuntime
+
+
+@if (!string.IsNullOrWhiteSpace(htmlDocument.Text))
+{
+	<div class="mb-3">
+		<button type="button" class="form-control btn-warning" @onclick="SaveResultsAsJsonAsync">Pro stažení výsledku vyhledávání klikněte zde.</button>
+	</div>
+
+	<div>
+		<p>@htmlDocument.Text</p>
+	</div>
+
+}
+
+@if (!string.IsNullOrEmpty(notification))
+{
+	<div><p>@notification</p></div>
+}
+
+@code {
+	[Parameter]
+	public string Query { get; set; } = string.Empty;
+	HtmlDocument htmlDocument = new HtmlDocument();
+	SearchResult? searchResult = new SearchResult();
+	private string notification = "";
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		try
+		{
+			string moodifiedQuery = Uri.EscapeDataString(Query);
+
+			string htmlAddress = @"https://www.google.com/search?q={modifiedQuery}";
+
+			HtmlWeb web = new HtmlWeb();
+
+			htmlDocument = await web.LoadFromWebAsync(htmlAddress);
+
+
+		}
+		catch (HttpRequestException)
+		{
+			notification = "Nelze se připojit k internetu. ";
+		}
+		catch (Exception ex)
+		{
+			notification = $"Došlo k chybě : {ex.Message}";
+		}
+
+	}
+
+	private async Task SaveResultsAsJsonAsync()
+	{
+		try
+		{
+			if (!string.IsNullOrWhiteSpace(htmlDocument.Text))
+			{
+				HtmlParser parser = new HtmlParser();
+
+				searchResult = parser.ParseHtmlDocument(htmlDocument);
+
+				JsonSaver saver = new JsonSaver(JsRuntime);
+				await saver.SaveResultToJsonAsync(searchResult);
+			}
+
+		}
+		catch (Exception ex)
+		{
+			notification = $"Došlo k chybě : {ex.Message}";
+		}
+
+	}
+}

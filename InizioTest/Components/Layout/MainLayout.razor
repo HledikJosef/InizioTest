@@ -1,0 +1,73 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager NavManager;
+
+<div class="page">
+
+    <main>
+        <div class="top-row px-4">
+            <div class="mx-3">
+                <EditForm Model="FormEntry" OnValidSubmit="CallSearchPageWithApi" FormName="SearchWithApi">
+
+
+                    <InputText class="form-text" @bind-Value="FormEntry" placeholder="Zadejte text pro vyhledání" />
+
+                    <button type="submit" class="btn btn-outline-primary btn-sm ">Hledej s Google API</button>
+                    <button type="submit" class="btn btn-outline-primary btn-sm " @onclick="CallSearchPageWithoutApi">Hledej bez API</button>
+
+                </EditForm>
+            </div>
+
+
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private string FormEntry { get; set; } = string.Empty;
+    private string searchText = string.Empty;
+
+    private void CallSearchPageWithApi()
+    {
+        if (string.IsNullOrWhiteSpace(FormEntry))
+        {
+            return;
+        }
+
+        searchText = FormEntry;
+        FormEntry = string.Empty;
+
+        NavManager.NavigateTo($"searchPageWithApi/{searchText}");
+
+
+    }
+
+    private void CallSearchPageWithoutApi()
+    {
+        if (string.IsNullOrWhiteSpace(FormEntry))
+        {
+            return;
+        }
+
+        searchText = FormEntry;
+        FormEntry = string.Empty;
+
+        NavManager.NavigateTo($"searchPageWithoutApi/{searchText}");
+
+    }
+}
